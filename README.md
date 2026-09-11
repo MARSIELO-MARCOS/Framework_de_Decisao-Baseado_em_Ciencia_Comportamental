@@ -217,7 +217,7 @@ Este repositório foi desenvolvido como projeto de estudo e prova de conceito pa
 - **Lógica da ferramenta e algoritmo de pontuação**: todos os direitos reservados. © 2026 Marcelo Marcos Pinheiro. Este repositório **não** possui uma licença de código aberto — nenhum uso, cópia, modificação ou distribuição do código da ferramenta é permitido sem autorização prévia por escrito do autor.
 - Este projeto pode evoluir futuramente para um produto/SaaS independente. A publicação neste repositório não constitui cessão de direitos sobre a ideia, marca ou lógica de negócio associada.
 
-Para dúvidas sobre uso ou parcerias, entre em contato via [seu contato/LinkedIn].
+Para dúvidas sobre uso ou parcerias, entre em contato via https://www.linkedin.com/in/marcelo-marcos-pinheiro-941b57b8
 
 ---
 
