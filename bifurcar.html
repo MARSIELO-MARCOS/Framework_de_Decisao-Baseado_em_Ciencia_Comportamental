@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<!--
+  Bifurcar — Um caminho, duas direções
+  Copyright © 2026 Marcelo Marcos Pinheiro. Todos os direitos reservados.
+
+  Este arquivo contém a lógica e o algoritmo de pontuação da ferramenta
+  "Bifurcar". Nenhuma licença de código aberto é concedida sobre este
+  conteúdo. Uso, cópia, modificação, distribuição ou aplicação comercial
+  requerem autorização prévia por escrito do autor.
+
+  O conteúdo educacional relacionado a este projeto (resumos, glossário,
+  curadoria de fontes) é licenciado separadamente sob CC BY 4.0 —
+  ver LICENSE-CONTENT.md no repositório.
+-->
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bifurcar — Diagnóstico de Decisão</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #12201C;
+    --bg-deep: #0D1714;
+    --card: #EDE9DC;
+    --card-line: #C9C2AC;
+    --ink: #1A1D19;
+    --ink-soft: #4B4E47;
+    --teal: #2F6E64;
+    --teal-deep: #1E4A43;
+    --amber: #C08A3D;
+    --rust: #9A4636;
+    --line-on-dark: rgba(237,233,220,0.18);
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0;padding:0;
+    background:var(--bg);
+    color:var(--card);
+    font-family:'Inter',sans-serif;
+    min-height:100%;
+  }
+  .wrap{
+    max-width:640px;
+    margin:0 auto;
+    padding:48px 24px 80px;
+  }
+  .kicker{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.04em;
+    color:var(--amber);
+    margin-bottom:10px;
+  }
+  h1{
+    font-family:'Source Serif 4',serif;
+    font-weight:700;
+    font-size:34px;
+    line-height:1.15;
+    margin:0 0 16px;
+    color:var(--card);
+  }
+  h1 .subtitle{
+    display:block;
+    font-size:17px;
+    font-weight:400;
+    font-style:italic;
+    color:rgba(237,233,220,0.7);
+    margin-top:6px;
+  }
+  .lede{
+    font-size:16px;
+    line-height:1.6;
+    color:rgba(237,233,220,0.82);
+    max-width:52ch;
+    margin:0 0 32px;
+  }
+  .progress-track{
+    display:flex;
+    gap:6px;
+    margin-bottom:36px;
+  }
+  .progress-seg{
+    height:3px;
+    flex:1;
+    background:var(--line-on-dark);
+    border-radius:0;
+    transition:background 0.3s ease;
+  }
+  .progress-seg.done{ background:var(--teal); }
+  .progress-seg.current{ background:var(--amber); }
+
+  .card{
+    background:var(--card);
+    color:var(--ink);
+    border-left:4px solid var(--teal);
+    padding:32px 28px;
+  }
+  .card .qnum{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    color:var(--ink-soft);
+    margin-bottom:10px;
+  }
+  .card h2{
+    font-family:'Source Serif 4',serif;
+    font-size:22px;
+    line-height:1.35;
+    margin:0 0 24px;
+    font-weight:600;
+  }
+  .scale{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+  .opt{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    padding:12px 14px;
+    border:1px solid var(--card-line);
+    cursor:pointer;
+    background:transparent;
+    transition:border-color 0.15s ease, background 0.15s ease;
+    text-align:left;
+    font-family:'Inter',sans-serif;
+    font-size:14px;
+    color:var(--ink);
+  }
+  .opt:hover{ border-color:var(--teal); }
+  .opt.selected{
+    border-color:var(--teal);
+    background:rgba(47,110,100,0.08);
+  }
+  .opt .dot{
+    width:10px;height:10px;
+    border:1.5px solid var(--ink-soft);
+    flex:none;
+  }
+  .opt.selected .dot{
+    background:var(--teal);
+    border-color:var(--teal);
+  }
+  .nav-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-top:28px;
+  }
+  button.btn{
+    font-family:'Inter',sans-serif;
+    font-size:14px;
+    font-weight:600;
+    padding:11px 22px;
+    border:none;
+    cursor:pointer;
+    background:var(--teal);
+    color:var(--card);
+    transition:background 0.15s ease, opacity 0.15s ease;
+  }
+  button.btn:hover{ background:var(--teal-deep); }
+  button.btn:disabled{
+    opacity:0.35;
+    cursor:not-allowed;
+  }
+  button.btn.ghost{
+    background:transparent;
+    color:rgba(237,233,220,0.75);
+    border:1px solid var(--line-on-dark);
+  }
+  button.btn.ghost:hover{ background:rgba(237,233,220,0.06); }
+
+  .start-btn{
+    font-family:'Inter',sans-serif;
+    font-size:15px;
+    font-weight:600;
+    padding:14px 28px;
+    border:none;
+    cursor:pointer;
+    background:var(--amber);
+    color:#1A1300;
+  }
+  .start-btn:hover{ background:#A87732; }
+
+  .hidden{ display:none !important; }
+
+  /* Resultado */
+  .result-badge{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:13px;
+    letter-spacing:0.03em;
+    padding:6px 12px;
+    display:inline-block;
+    margin-bottom:18px;
+  }
+  .result-badge.persistir{ background:var(--teal); color:var(--card); }
+  .result-badge.reavaliar{ background:var(--amber); color:#1A1300; }
+  .result-badge.encerrar{ background:var(--rust); color:var(--card); }
+
+  .result-title{
+    font-family:'Source Serif 4',serif;
+    font-size:28px;
+    font-weight:700;
+    margin:0 0 18px;
+    color:var(--ink);
+  }
+  .result-block{
+    margin-bottom:22px;
+  }
+  .result-block .label{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    color:var(--ink-soft);
+    margin-bottom:6px;
+    letter-spacing:0.03em;
+  }
+  .result-block p{
+    font-size:15px;
+    line-height:1.65;
+    margin:0 0 8px;
+    color:var(--ink);
+  }
+  .result-block p.citation{
+    font-size:13px;
+    color:var(--ink-soft);
+    font-style:italic;
+  }
+
+  .readout{
+    margin-top:8px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  .readout-row{
+    display:grid;
+    grid-template-columns:150px 1fr 30px;
+    align-items:center;
+    gap:10px;
+  }
+  .readout-row .rname{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    color:var(--ink-soft);
+  }
+  .readout-bar{
+    height:8px;
+    background:rgba(26,29,25,0.08);
+    position:relative;
+  }
+  .readout-fill{
+    height:100%;
+    background:var(--teal);
+  }
+  .readout-row .rval{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    color:var(--ink-soft);
+    text-align:right;
+  }
+
+  .restart-row{
+    margin-top:30px;
+    display:flex;
+    justify-content:flex-end;
+  }
+
+  footer.note{
+    margin-top:40px;
+    font-size:12px;
+    color:rgba(237,233,220,0.45);
+    line-height:1.6;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- INTRO -->
+  <div id="screen-intro">
+    <div class="kicker">FRAMEWORK DE DECISÃO — BASEADO EM CIÊNCIA COMPORTAMENTAL</div>
+    <h1>Bifurcar<br><span class="subtitle">Um caminho, duas direções.</span></h1>
+    <p class="lede">Sete perguntas rápidas, baseadas em estudos sobre escalada de comprometimento, identidade e regulação emocional, para te ajudar a decidir o próximo passo do projeto que você está prestes a abandonar — ou defender.</p>
+    <button class="start-btn" onclick="startAssessment()">Iniciar diagnóstico</button>
+  </div>
+
+  <!-- QUESTIONS -->
+  <div id="screen-quiz" class="hidden">
+    <div class="progress-track" id="progressTrack"></div>
+    <div class="card">
+      <div class="qnum" id="qnum">Pergunta 1 de 7</div>
+      <h2 id="qtext"></h2>
+      <div class="scale" id="qoptions"></div>
+    </div>
+    <div class="nav-row">
+      <button class="btn ghost" id="backBtn" onclick="goBack()">Voltar</button>
+      <button class="btn" id="nextBtn" onclick="goNext()" disabled>Avançar</button>
+    </div>
+  </div>
+
+  <!-- TIEBREAK -->
+  <div id="screen-tiebreak" class="hidden">
+    <div class="card">
+      <div class="qnum">Equilíbrio detectado</div>
+      <h2>Suas respostas resultaram num equilíbrio na análise. Responda mais uma pergunta para concluirmos.</h2>
+      <div class="scale" id="tieOptions"></div>
+    </div>
+    <div class="nav-row">
+      <div></div>
+      <button class="btn" id="tieConfirmBtn" disabled>Concluir diagnóstico</button>
+    </div>
+  </div>
+
+  <!-- RESULT -->
+  <div id="screen-result" class="hidden">
+    <div class="card" id="resultCard"></div>
+    <div class="restart-row">
+      <button class="btn ghost" onclick="restart()">Refazer diagnóstico</button>
+    </div>
+    <footer class="note">
+      Esta ferramenta é uma síntese educacional baseada em estudos de psicologia da decisão e comportamento organizacional. Não substitui uma decisão analisada com sua equipe e com dados do projeto real.
+    </footer>
+  </div>
+
+  <footer class="copyright-footer">
+    © 2026 Marcelo Marcos Pinheiro. Todos os direitos reservados.
+  </footer>
+
+</div>
+
+<style>
+  .copyright-footer{
+    text-align:center;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:0.7rem;
+    color:var(--ink-soft);
+    opacity:0.6;
+    padding:24px 0 12px;
+  }
+</style>
+
+<script>
+/* ---------- DADOS ---------- */
+
+const CONTEXT_QUESTION = {
+  text: "Há quanto tempo esse projeto, ideia ou plano está em andamento?",
+  options: [
+    "Menos de 1 mês",
+    "Entre 1 e 6 meses",
+    "Entre 6 meses e 2 anos",
+    "Mais de 2 anos"
+  ]
+};
+
+const QUESTIONS = [
+  {
+    pillar: "Sunk Cost",
+    text: "Referente ao que você já investiu (tempo, dinheiro, esforço), quanto peso isso tem na sua decisão?",
+    options: [
+      "Quase nada — penso mais no que vem pela frente",
+      "Um pouco, mas dados atuais pesam mais",
+      "Pesa de forma relevante na minha decisão",
+      "Pesa bastante — é um dos motivos principais",
+      "É praticamente o motivo central de eu continuar"
+    ]
+  },
+  {
+    pillar: "Status Quo",
+    text: "Considerando tudo que você sabe hoje sobre as dificuldades deste projeto — mas sem contar nada do que já foi investido — você decidiria começá-lo do zero?",
+    options: [
+      "Sim, sem dúvida",
+      "Provavelmente sim",
+      "Não tenho certeza",
+      "Provavelmente não",
+      "Definitivamente não"
+    ]
+  },
+  {
+    pillar: "Identidade",
+    text: "Nos últimos marcos do projeto, você ajustou a estratégia diante dos resultados, ou manteve o plano original mesmo com sinais de que não estava funcionando?",
+    options: [
+      "Ajusto a estratégia com frequência, assim que vejo sinais de problema",
+      "Ajusto na maioria das vezes",
+      "Um equilíbrio entre ajustar e manter o plano",
+      "Na maioria das vezes mantenho o plano original",
+      "Mantenho o plano original mesmo diante de resultados ruins"
+    ]
+  },
+  {
+    pillar: "Segurança de Equipe",
+    text: "Sua equipe (ou você mesmo) se sente à vontade para dizer abertamente 'isso não está funcionando'?",
+    options: [
+      "Sim, isso é dito com frequência e sem receio",
+      "Na maioria das vezes, sim",
+      "Às vezes, com certo desconforto",
+      "Raramente — costuma ficar em silêncio",
+      "Nunca — ninguém verbaliza isso"
+    ]
+  },
+  {
+    pillar: "Regulação Emocional",
+    text: "As decisões recentes sobre esse projeto foram guiadas mais por dados e análise fria, ou por urgência e pressão do momento?",
+    options: [
+      "Quase sempre por dados frios",
+      "Principalmente por dados, com pressão pontual",
+      "Uma mistura dos dois",
+      "Principalmente por urgência emocional",
+      "Quase sempre no calor do momento"
+    ]
+  },
+  {
+    pillar: "Persistência (Grit)",
+    text: "Comparando os últimos marcos do projeto, os resultados vêm melhorando, estagnados ou piorando?",
+    options: [
+      "Melhorando de forma clara e consistente",
+      "Melhorando, ainda que lentamente",
+      "Estagnados, sem direção clara",
+      "Piorando aos poucos",
+      "Piorando de forma consistente, sem sinal de melhora"
+    ]
+  }
+];
+
+const REFLECTION_OVERRIDE_BY_PILLAR = {
+  "Sunk Cost": {
+    gancho: "O peso do que já foi investido chamou atenção, mas foi o único ponto fora da curva entre os seis fatores avaliados.",
+    insight: "A pesquisa sobre grit (Duckworth et al., 2007) mostra que um sinal isolado, sem outros fatores na mesma direção, raramente é suficiente para justificar abandonar algo — muitas vezes reflete persistência ativa, não estagnação real.",
+    takeaway: "Vale observar esse ponto de perto, mas ele não parece estar acompanhado de outros sinais que reforcem a mesma direção.",
+    citation: "Duckworth, A. L. et al. (2007). Grit: Perseverance and Passion for Long-Term Goals."
+  },
+  "Status Quo": {
+    gancho: "A hesitação em recomeçar do zero se destacou, mas apareceu sozinha entre os seis fatores avaliados.",
+    insight: "Segundo a pesquisa sobre grit (Duckworth et al., 2007), um único sinal de dúvida, sem respaldo de outros fatores, tende a pesar menos do que parece à primeira vista.",
+    takeaway: "Vale reservar um momento para essa reflexão, mas sem tratá-la como decisiva por si só.",
+    citation: "Duckworth, A. L. et al. (2007). Grit: Perseverance and Passion for Long-Term Goals."
+  },
+  "Identidade": {
+    gancho: "A resistência em mudar de plano chamou atenção, mas foi o único ponto que se destacou entre os seis fatores.",
+    insight: "A pesquisa sobre grit (Duckworth et al., 2007) sugere que esse tipo de sinal isolado costuma acompanhar persistência genuína mais do que negação, quando o restante do quadro não aponta na mesma direção.",
+    takeaway: "Vale uma reflexão honesta, mas sem tratar isso como um veredito.",
+    citation: "Duckworth, A. L. et al. (2007). Grit: Perseverance and Passion for Long-Term Goals."
+  },
+  "Segurança de Equipe": {
+    gancho: "O silêncio da equipe se destacou, mas foi o único sinal de alerta entre os seis fatores avaliados.",
+    insight: "Segundo a pesquisa sobre grit (Duckworth et al., 2007), um ponto isolado como esse, sem reforço de outros fatores, costuma ter menos peso do que parece isoladamente.",
+    takeaway: "Vale abrir espaço para essa conversa, mas sem tratar isso como decisivo sozinho.",
+    citation: "Duckworth, A. L. et al. (2007). Grit: Perseverance and Passion for Long-Term Goals."
+  },
+  "Regulação Emocional": {
+    gancho: "A pressão emocional nas decisões recentes se destacou, mas foi o único ponto fora da curva entre os seis fatores.",
+    insight: "A pesquisa sobre grit (Duckworth et al., 2007) mostra que um sinal isolado como esse raramente basta para definir o rumo, especialmente quando o restante do quadro não aponta na mesma direção.",
+    takeaway: "Vale esperar um pouco antes da próxima decisão importante, sem tratar esse ponto como definitivo.",
+    citation: "Duckworth, A. L. et al. (2007). Grit: Perseverance and Passion for Long-Term Goals."
+  }
+};
+
+const PILLAR_CONTENT = {
+  "Sunk Cost": {
+    citation: "Arkes, H. R.; Blumer, C. (1985). The Psychology of Sunk Cost.",
+    tiers: {
+      low: {
+        gancho: "O que já foi investido não parece estar pesando na sua decisão — e isso é raro.",
+        insight: "A maioria das pessoas, segundo Arkes & Blumer (1985), tende a inflar a importância de recursos já gastos ao decidir sobre o futuro. Você parece estar avaliando a decisão com base no que vem pela frente, não no que ficou para trás.",
+        takeaway: "Esse é exatamente o padrão que a ciência da decisão recomenda: tratar custos irrecuperáveis como irrelevantes para a escolha atual."
+      },
+      mid: {
+        gancho: "O que já foi investido pesa na sua cabeça, mas não parece ser o fator decisivo — ainda.",
+        insight: "É raro equilibrar o peso emocional do que já foi gasto com uma leitura mais fria dos próximos passos. Segundo Arkes & Blumer (1985), a maioria das pessoas se inclina fortemente para um lado sem perceber.",
+        takeaway: "Vale conferir sua resposta sobre \"decidir do zero hoje\" para confirmar se esse equilíbrio é real ou só aparente."
+      },
+      high_reavaliar: {
+        gancho: "Entre os fatores avaliados, o peso do que já foi investido se destaca claramente dos demais.",
+        insight: "Quando o custo já gasto pesa mais que qualquer outro fator, vale atenção redobrada: segundo Arkes & Blumer (1985), esse padrão aparece mesmo em decisões profissionais bem informadas, e tende a se sobrepor ao restante da análise se não for questionado diretamente.",
+        takeaway: "Antes de decidir, vale perguntar: se eu ignorasse completamente o que já gastei, essa ainda seria minha maior preocupação?"
+      },
+      high_encerrar: {
+        gancho: "O peso do que já foi investido aparece como o sinal mais forte dentro de um conjunto já carregado de alertas.",
+        insight: "Segundo o estudo clássico de Arkes & Blumer (1985), o cérebro trata recursos já gastos como parte da equação sobre o futuro, mesmo sendo irrecuperáveis — e esse efeito costuma se intensificar quando outros sinais de alerta também estão presentes.",
+        takeaway: "Combinado aos demais sinais deste diagnóstico, esse é um dos padrões mais associados a decisões mantidas por tempo demais."
+      }
+    }
+  },
+  "Status Quo": {
+    citation: "Samuelson, W.; Zeckhauser, R. J. (1988). Status Quo Bias in Decision Making.",
+    tiers: {
+      low: {
+        gancho: "Se pudesse decidir hoje do zero, você começaria de novo sem hesitar.",
+        insight: "Isso é um sinal forte: a pesquisa sobre viés de status quo mostra que, normalmente, as pessoas preferem manter o caminho atual mesmo quando ele não é o ideal. Você parece estar decidindo pelo mérito real do projeto, não por inércia.",
+        takeaway: "Esse é um dos sinais mais confiáveis de que vale a pena continuar."
+      },
+      mid: {
+        gancho: "Você hesitaria em decidir de novo — nem sim, nem não com clareza.",
+        insight: "Essa indecisão é comum e significa que os prós e contras estão mais equilibrados do que aparentam à primeira vista. A pesquisa sobre viés de status quo mostra que tendemos a preferir manter o caminho atual mesmo quando a balança está no meio-termo.",
+        takeaway: "Vale reunir mais dados concretos antes de decidir só pela inércia do que já está em curso."
+      },
+      high_reavaliar: {
+        gancho: "Sua resposta sobre \"recomeçar do zero\" foi o ponto que mais se destacou nesta análise.",
+        insight: "A pesquisa sobre viés de status quo mostra que hesitar em recomeçar do zero costuma refletir apego ao caminho já em curso, não necessariamente ao mérito real da decisão.",
+        takeaway: "Vale revisitar essa resposta com calma: o que mudaria se você estivesse decidindo sem nenhum histórico prévio?"
+      },
+      high_encerrar: {
+        gancho: "A hesitação em recomeçar do zero aparece como o ponto mais forte dentro de um quadro já preocupante.",
+        insight: "A pesquisa sobre viés de status quo mostra que preferimos manter o caminho atual só por ele já estar em curso — e esse efeito tende a se somar a outros sinais de alerta, dificultando ainda mais uma decisão de encerrar.",
+        takeaway: "Combinado ao restante do diagnóstico, isso reforça que a inércia pode estar pesando mais que a análise objetiva."
+      }
+    }
+  },
+  "Identidade": {
+    citation: "Brockner, J. et al. (1986). Escalation of Commitment to an Ineffective Course of Action.",
+    tiers: {
+      low: {
+        gancho: "Você parece ajustar a estratégia rapidamente diante de sinais de problema — sem apego à decisão original.",
+        insight: "Isso é um comportamento raro e valioso: a pesquisa de Brockner e colegas (1986) mostra que a maioria das pessoas tende a se comprometer ainda mais com decisões ruins quando a autoimagem está ameaçada. Você parece estar conseguindo separar a decisão do ego.",
+        takeaway: "Esse é um sinal forte de que, se você está continuando, é por avaliação real — não por apego."
+      },
+      mid: {
+        gancho: "Você ajusta o plano às vezes, mas também mantém partes dele mesmo diante de resultados ruins.",
+        insight: "Esse equilíbrio é comum e nem sempre é um problema — mas vale notar quais partes do plano você resiste a mudar, e por quê. A pesquisa de Brockner e colegas (1986) mostra que ameaças à autoimagem tendem a travar justamente os pontos mais ligados ao ego.",
+        takeaway: "Pergunte-se: as partes que você não muda são as que fazem mais sentido manter, ou as que mais doeria admitir que erraram?"
+      },
+      high_reavaliar: {
+        gancho: "Manter o plano original mesmo diante de resultados ruins foi o ponto que mais se destacou.",
+        insight: "A pesquisa de Brockner e colegas (1986) mostra que ameaças à autoimagem tendem a travar justamente esse tipo de ajuste — vale observar se a resistência a mudar vem de convicção ou de proteção do ego.",
+        takeaway: "Esse é um bom momento para perguntar a alguém de confiança se enxerga esse apego de fora."
+      },
+      high_encerrar: {
+        gancho: "A resistência em ajustar o plano original aparece como o sinal mais forte dentro de um quadro já carregado.",
+        insight: "Segundo Brockner e colegas (1986), quando a autoimagem está ameaçada, a tendência é reforçar ainda mais o compromisso com decisões ruins — e esse padrão costuma se intensificar quando outros sinais de alerta também aparecem.",
+        takeaway: "Combinado ao restante deste diagnóstico, isso sugere que o apego à decisão original pode estar custando mais do que parece."
+      }
+    }
+  },
+  "Segurança de Equipe": {
+    citation: "Sleesman, D. J. et al. (2012). Cleaning Up the Big Muddy: A Meta-Analytic Review.",
+    tiers: {
+      low: {
+        gancho: "Sua equipe parece se sentir segura para dizer abertamente quando algo não está funcionando.",
+        insight: "Isso é um ativo raro: pesquisas mostram que a escalada de comprometimento organizacional raramente é sustentada quando há espaço real para dissenso. Times assim cortam decisões ruins muito mais cedo.",
+        takeaway: "Esse é um dos sinais mais fortes de que a decisão de continuar (ou parar) está sendo bem calibrada coletivamente."
+      },
+      mid: {
+        gancho: "Sua equipe às vezes verbaliza dúvidas, mas nem sempre se sente totalmente à vontade para isso.",
+        insight: "Esse meio-termo é comum em times em transição — segurança psicológica é construída aos poucos. Pesquisas sobre escalada de comprometimento mostram que mesmo pequenas aberturas para dúvidas já reduzem o risco de decisões coletivas ruins.",
+        takeaway: "Vale investir em tornar esse espaço mais explícito e frequente, não deixar como exceção."
+      },
+      high_reavaliar: {
+        gancho: "O silêncio da equipe diante de possíveis problemas foi o ponto que mais se destacou.",
+        insight: "Pesquisas sobre escalada de comprometimento mostram que decisões ruins raramente são sustentadas por uma única pessoa — elas se mantêm pelo silêncio coletivo.",
+        takeaway: "Vale criar, mesmo que informalmente, um espaço específico para ouvir dúvidas da equipe antes de decidir."
+      },
+      high_encerrar: {
+        gancho: "O silêncio da equipe aparece como o sinal mais forte dentro de um conjunto já preocupante de alertas.",
+        insight: "Segundo a meta-análise de Sleesman e colegas (2012), a ausência de espaço para dissenso é um dos fatores mais associados à manutenção de decisões ruins por tempo excessivo — e esse efeito se soma aos demais sinais deste diagnóstico.",
+        takeaway: "Combinado ao restante da análise, a falta de vozes discordantes pode estar mascarando um problema maior do que parece."
+      }
+    }
+  },
+  "Regulação Emocional": {
+    citation: "Simonson, I.; Staw, B. (1992). Deescalation Strategies.",
+    tiers: {
+      low: {
+        gancho: "Suas decisões recentes parecem guiadas por dados e análise, não por urgência emocional.",
+        insight: "Isso é um sinal positivo: pesquisas sobre de-escalation mostram que decisões tomadas sob pressão aguda tendem a reforçar o comprometimento com o curso atual, mesmo quando ele está falhando. Você parece estar decidindo com mais clareza que a média.",
+        takeaway: "Esse é um bom indício de que sua avaliação sobre continuar ou não está bem fundamentada."
+      },
+      mid: {
+        gancho: "As decisões recentes têm sido uma mistura de dados frios e pressão do momento.",
+        insight: "Esse equilíbrio é comum, mas vale notar em quais momentos a pressão pesa mais. Segundo Simonson & Staw (1992), reduzir a ameaça percebida à sua competência ao avaliar essa decisão tende a diminuir a necessidade de se justificar, facilitando enxergar os dados com mais clareza.",
+        takeaway: "Tente identificar se as decisões mais importantes ficam do lado \"calmo\" ou do lado \"urgente\" dessa mistura."
+      },
+      high_reavaliar: {
+        gancho: "As decisões recentes tomadas sob pressão foram o ponto que mais se destacou nesta análise.",
+        insight: "Pesquisas sobre de-escalation mostram que decisões tomadas sob urgência emocional tendem a reforçar o rumo atual, mesmo quando ele está falhando.",
+        takeaway: "Reduzir a ameaça percebida à sua competência antes de decidir — por exemplo, lembrando que essa decisão não define sua capacidade como profissional — tende a melhorar a qualidade da decisão final, segundo Simonson & Staw (1992)."
+      },
+      high_encerrar: {
+        gancho: "A pressão emocional nas decisões recentes aparece como o sinal mais forte dentro de um quadro já carregado.",
+        insight: "Segundo Simonson & Staw (1992), decisões tomadas sob pressão aguda tendem a reforçar o comprometimento com o curso atual — e esse efeito se intensifica quando combinado a outros sinais de alerta, como os demais deste diagnóstico.",
+        takeaway: "Combinado ao restante da análise, isso sugere que o momento da decisão pode estar distorcendo o julgamento tanto quanto o próprio projeto."
+      }
+    }
+  },
+  "Persistência (Grit)": {
+    citation: "Duckworth, A. L. et al. (2007); Lucas, G. M. et al. (2015).",
+    tiers: {
+      low: {
+        gancho: "Os resultados vêm melhorando de forma consistente nos últimos marcos.",
+        insight: "Esse é exatamente o tipo de sinal objetivo que a pesquisa sobre grit aponta como diferença entre persistência saudável e teimosia: progresso real e mensurável, não apenas esperança.",
+        takeaway: "Esse é um forte indício de que continuar é uma escolha de força, não de negação."
+      },
+      mid: {
+        gancho: "Os resultados estão estagnados — nem melhorando, nem piorando com clareza.",
+        insight: "Estagnação é um sinal ambíguo: pode ser o platô antes de um avanço, ou o início de uma queda lenta. A pesquisa sobre grit mostra que a diferença entre persistência saudável e custosa está nos sinais objetivos de progresso — e estagnação prolongada costuma pesar para o lado de alerta.",
+        takeaway: "Vale definir um prazo claro: se a estagnação continuar por mais tempo, isso deixa de ser platô e vira sinal de alerta."
+      },
+      high_reavaliar: {
+        gancho: "A falta de progresso recente foi o ponto que mais se destacou nesta análise.",
+        insight: "A pesquisa sobre grit mostra que a diferença entre persistência saudável e custosa está nos sinais objetivos de progresso — e a ausência deles costuma ser o primeiro indício de alerta.",
+        takeaway: "Vale definir um prazo claro para reavaliar: se não houver progresso até lá, esse sinal ganha ainda mais peso."
+      },
+      high_encerrar: {
+        gancho: "A ausência de progresso real aparece como o sinal mais forte dentro de um conjunto já carregado de alertas.",
+        insight: "Segundo a pesquisa sobre grit, persistência sem sinais objetivos de progresso deixa de ser força e passa a ser um padrão de risco — especialmente quando combinada a outros sinais de alerta, como os demais deste diagnóstico.",
+        takeaway: "Combinado ao restante da análise, a falta de evidência de avanço é um dos indicadores mais consistentes de que pode ser hora de encerrar."
+      }
+    }
+  }
+};
+
+const PILLAR_SHORT_LABEL = {
+  "Sunk Cost": "É o tempo e o esforço já gastos que mais me seguram nisso",
+  "Status Quo": "Se eu tivesse que apostar de novo hoje, hesitaria bastante",
+  "Identidade": "No fundo, é mais sobre não querer voltar atrás do que sobre os fatos",
+  "Segurança de Equipe": "Ninguém no time costuma levantar a mão para dizer que algo está errado",
+  "Regulação Emocional": "Tenho decidido mais no impulso do momento do que com calma",
+  "Persistência (Grit)": "Os avanços recentes têm sido fracos ou praticamente inexistentes"
+};
+
+/* ---------- ESTADO ---------- */
+let currentIndex = -1; // -1 = pergunta de contexto
+let contextAnswer = null;
+let answers = new Array(QUESTIONS.length).fill(null);
+
+const screenIntro = document.getElementById('screen-intro');
+const screenQuiz = document.getElementById('screen-quiz');
+const screenTiebreak = document.getElementById('screen-tiebreak');
+const screenResult = document.getElementById('screen-result');
+const progressTrack = document.getElementById('progressTrack');
+const qnumEl = document.getElementById('qnum');
+const qtextEl = document.getElementById('qtext');
+const qoptionsEl = document.getElementById('qoptions');
+const backBtn = document.getElementById('backBtn');
+const nextBtn = document.getElementById('nextBtn');
+const tieOptionsEl = document.getElementById('tieOptions');
+const tieConfirmBtn = document.getElementById('tieConfirmBtn');
+
+const TOTAL_STEPS = QUESTIONS.length + 1; // +1 pela pergunta de contexto
+
+function buildProgress(){
+  progressTrack.innerHTML = '';
+  for(let i=0;i<TOTAL_STEPS;i++){
+    const seg = document.createElement('div');
+    seg.className = 'progress-seg';
+    progressTrack.appendChild(seg);
+  }
+}
+
+function updateProgress(){
+  const segs = progressTrack.children;
+  const activeIndex = currentIndex + 1; // 0 = contexto
+  for(let i=0;i<segs.length;i++){
+    segs[i].className = 'progress-seg' + (i < activeIndex ? ' done' : (i === activeIndex ? ' current' : ''));
+  }
+}
+
+function startAssessment(){
+  screenIntro.classList.add('hidden');
+  screenQuiz.classList.remove('hidden');
+  buildProgress();
+  currentIndex = -1;
+  renderQuestion();
+}
+
+function renderQuestion(){
+  updateProgress();
+  qoptionsEl.innerHTML = '';
+
+  let q, selectedVal;
+  if(currentIndex === -1){
+    q = CONTEXT_QUESTION;
+    selectedVal = contextAnswer;
+    qnumEl.textContent = "Contexto";
+  } else {
+    q = QUESTIONS[currentIndex];
+    selectedVal = answers[currentIndex];
+    qnumEl.textContent = "Pergunta " + (currentIndex + 2) + " de " + TOTAL_STEPS;
+  }
+
+  qtextEl.textContent = q.text;
+
+  q.options.forEach((optText, idx) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'opt' + (selectedVal === idx ? ' selected' : '');
+    btn.innerHTML = '<span class="dot"></span><span>' + optText + '</span>';
+    btn.onclick = () => selectOption(idx);
+    qoptionsEl.appendChild(btn);
+  });
+
+  backBtn.style.visibility = (currentIndex === -1) ? 'hidden' : 'visible';
+  nextBtn.disabled = (selectedVal === null || selectedVal === undefined);
+  nextBtn.textContent = (currentIndex === QUESTIONS.length - 1) ? 'Ver diagnóstico' : 'Avançar';
+}
+
+function selectOption(idx){
+  if(currentIndex === -1){
+    contextAnswer = idx;
+  } else {
+    answers[currentIndex] = idx;
+  }
+  renderQuestion();
+}
+
+function goNext(){
+  if(currentIndex === QUESTIONS.length - 1){
+    evaluateAndProceed();
+    return;
+  }
+  currentIndex++;
+  renderQuestion();
+}
+
+function goBack(){
+  if(currentIndex === -1) return;
+  currentIndex--;
+  renderQuestion();
+}
+
+function evaluateAndProceed(){
+  const maxVal = Math.max(...answers);
+  const tiedIdxs = [];
+  answers.forEach((v,i) => { if(v === maxVal) tiedIdxs.push(i); });
+
+  if(tiedIdxs.length > 1){
+    renderTieBreak(tiedIdxs);
+  } else {
+    showResult(tiedIdxs[0]);
+  }
+}
+
+function renderTieBreak(tiedIdxs){
+  screenQuiz.classList.add('hidden');
+  screenTiebreak.classList.remove('hidden');
+  tieOptionsEl.innerHTML = '';
+  tieConfirmBtn.disabled = true;
+  let chosenIdx = null;
+
+  tiedIdxs.forEach(idx => {
+    const pillar = QUESTIONS[idx].pillar;
+    const label = PILLAR_SHORT_LABEL[pillar];
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'opt';
+    btn.innerHTML = '<span class="dot"></span><span>' + label + '</span>';
+    btn.onclick = () => {
+      chosenIdx = idx;
+      Array.from(tieOptionsEl.children).forEach(c => c.classList.remove('selected'));
+      btn.classList.add('selected');
+      tieConfirmBtn.disabled = false;
+      tieConfirmBtn.onclick = () => showResult(chosenIdx);
+    };
+    tieOptionsEl.appendChild(btn);
+  });
+}
+
+function restart(){
+  currentIndex = -1;
+  contextAnswer = null;
+  answers = new Array(QUESTIONS.length).fill(null);
+  screenResult.classList.add('hidden');
+  screenTiebreak.classList.add('hidden');
+  screenIntro.classList.remove('hidden');
+}
+
+function showResult(dominantIdx){
+  screenQuiz.classList.add('hidden');
+  screenTiebreak.classList.add('hidden');
+  screenResult.classList.remove('hidden');
+
+  const total = answers.reduce((a,b) => a + b, 0); // 0..24 (6 perguntas, escala 0-4)
+  const maxScore = QUESTIONS.length * 4;
+
+  let category, badgeClass, resultTitle;
+  if(total <= 13){
+    category = "Reavaliar";
+    badgeClass = "reavaliar";
+    resultTitle = "Zona de atenção — vale reavaliar com critério";
+  } else {
+    category = "Considerar encerrar";
+    badgeClass = "encerrar";
+    resultTitle = "Vários sinais de alerta se acumulam";
+  }
+
+  const maxVal = answers[dominantIdx];
+  const dominantPillar = QUESTIONS[dominantIdx].pillar;
+  const bucket = (maxVal <= 1) ? 'low' : (maxVal === 2 ? 'mid' : 'high');
+
+  const isolatedSignal = (category === "Reavaliar") && (bucket === 'high') && (total <= maxScore * 0.35) && (dominantPillar !== "Persistência (Grit)");
+
+  const tierKey = (bucket === 'high')
+    ? (category === "Reavaliar" ? 'high_reavaliar' : 'high_encerrar')
+    : bucket;
+
+  let blockLabel, content, citationText;
+  if(isolatedSignal){
+    content = REFLECTION_OVERRIDE_BY_PILLAR[dominantPillar];
+    citationText = content.citation;
+    blockLabel = "REFLEXÃO — SINAL ISOLADO (" + dominantPillar.toUpperCase() + ")";
+  } else {
+    const pillarData = PILLAR_CONTENT[dominantPillar];
+    content = pillarData.tiers[tierKey];
+    citationText = pillarData.citation;
+    blockLabel = "PILAR DOMINANTE — " + dominantPillar.toUpperCase();
+  }
+
+  // readout de todos os pilares
+  const READOUT_LABEL = {
+    "Sunk Cost": "Custo Irrecuperável"
+  };
+  let readoutHtml = '';
+  QUESTIONS.forEach((q,i) => {
+    const val = answers[i];
+    const pct = Math.round((val / 4) * 100);
+    const displayName = READOUT_LABEL[q.pillar] || q.pillar;
+    readoutHtml += `
+      <div class="readout-row">
+        <div class="rname">${displayName}</div>
+        <div class="readout-bar"><div class="readout-fill" style="width:${pct}%"></div></div>
+        <div class="rval">${val + 1}/5</div>
+      </div>`;
+  });
+
+  const contextLabels = CONTEXT_QUESTION.options;
+  const contextText = contextAnswer !== null ? contextLabels[contextAnswer] : "não informado";
+
+  document.getElementById('resultCard').innerHTML = `
+    <div class="result-badge ${badgeClass}">${category.toUpperCase()}</div>
+    <h2 class="result-title">${resultTitle}</h2>
+
+    <div class="result-block">
+      <div class="label">CONTEXTO INFORMADO</div>
+      <p>Tempo de projeto: ${contextText}</p>
+    </div>
+
+    <div class="result-block">
+      <div class="label">${blockLabel}</div>
+      <p><strong>${content.gancho}</strong></p>
+      <p>${content.insight}</p>
+      <p>${content.takeaway}</p>
+      <p class="citation">${citationText}</p>
+    </div>
+
+    <div class="result-block">
+      <div class="label">LEITURA COMPLETA DOS 6 PILARES</div>
+      <div class="readout">${readoutHtml}</div>
+    </div>
+  `;
+}
+</script>
+</body>
+</html>
