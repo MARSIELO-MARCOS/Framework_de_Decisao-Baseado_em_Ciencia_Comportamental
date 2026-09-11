@@ -197,8 +197,7 @@ O miniguia inclui uma ferramenta interativa chamada **Bifurcar**, com 7 pergunta
 - Reflexão baseada em grit (Duckworth et al., 2007) quando o único sinal de alerta aparece isolado dentro de um quadro geral tranquilo — exceto quando o próprio pilar de Persistência é o sinal isolado, para evitar uma citação circular
 - Todo o conteúdo textual foi auditado manualmente contra os PDFs originais das fontes, com correções aplicadas sempre que uma afirmação não era sustentada pela fonte citada
 
-**Acesse a ferramenta:** [seu-usuario.github.io/nome-do-repositorio/bifurcar.html](#)
-*(atualize este link com a URL real gerada pelo GitHub Pages após a publicação)*
+**Acesse a ferramenta:** [marsielo-marcos.github.io/Framework_de_Decisao-Baseado_em_Ciencia_Comportamental/bifurcar.html](https://marsielo-marcos.github.io/Framework_de_Decisao-Baseado_em_Ciencia_Comportamental/bifurcar.html)
 
 ---
 
