@@ -18,7 +18,7 @@
 
 **Tema escolhido:** ciência da decisão de persistir ou encerrar projetos — unindo a psicologia da escalada de comprometimento (sunk cost, dissonância cognitiva, silêncio organizacional) com a ciência da persistência saudável (grit).
 
-**Motivação:** este caderno nasceu do interesse por entender por que é tão difícil abandonar um curso de ação que já não faz sentido. Em vez de resumir obras de divulgação sobre o tema (material protegido por direitos autorais), fui direto às **fontes acadêmicas primárias**, construindo meu próprio caderno de estudo a partir delas — e, a partir daí, uma ferramenta de diagnóstico aplicável.
+**Motivação:** este caderno nasceu do interesse por entender por que é tão difícil abandonar um curso de ação que já não faz sentido, despertado pela leitura de Quit: The Power of Knowing When to Walk Away, de Annie Duke. A partir dessa inquietação inicial, em vez de resumir obras de divulgação sobre o tema (material protegido por direitos autorais), fui direto às **fontes acadêmicas primárias**, construindo meu próprio caderno de estudo a partir delas — e, com isso, desenvolvi uma ferramenta de diagnóstico aplicável.
 
 **Objetivos de estudo:**
 - [x] Entender os mecanismos psicológicos por trás do *sunk cost effect* e do *escalation of commitment*
